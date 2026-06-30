@@ -30,27 +30,18 @@ export class GasApiError extends Error {
   }
 }
 
-const TIMEOUT_MS = 30_000; // GAS コールドスタートを考慮して30秒
-
 type Params = Record<string, string | undefined>;
 type Body = Record<string, unknown>;
 
-/** タイムアウト付き fetch */
-async function fetchWithTimeout(
+/** fetch ラッパー（ネットワークエラーを GasApiError に変換） */
+async function gasFetch(
   input: string,
   init?: RequestInit
 ): Promise<Response> {
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
   try {
-    return await fetch(input, { ...init, signal: controller.signal });
+    return await fetch(input, init);
   } catch (e) {
-    if (e instanceof DOMException && e.name === 'AbortError') {
-      throw new GasApiError(408, 'リクエストがタイムアウトしました。GASのセットアップが完了しているか確認してください。');
-    }
     throw new GasApiError(0, 'ネットワークエラー: ' + (e instanceof Error ? e.message : String(e)));
-  } finally {
-    clearTimeout(timer);
   }
 }
 
@@ -78,7 +69,7 @@ async function gasGet<T>(path: string, params?: Params, token?: string | null): 
       if (v !== undefined) url.searchParams.set(k, v);
     }
   }
-  const res = await fetchWithTimeout(url.toString());
+  const res = await gasFetch(url.toString());
   const data = await safeJson<T>(res);
   if (data.error) throw new GasApiError(data.status ?? 400, data.error);
   return data;
@@ -100,7 +91,7 @@ async function gasPost<T>(
   if (token) payload.token = token;
 
   // Content-Type ヘッダーを明示しない → ブラウザは text/plain を送信 → CORS preflight なし
-  const res = await fetchWithTimeout(url.toString(), {
+  const res = await gasFetch(url.toString(), {
     method: 'POST',
     body: JSON.stringify(payload),
   });
