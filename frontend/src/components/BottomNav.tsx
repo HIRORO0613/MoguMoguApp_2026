@@ -1,12 +1,21 @@
 import { NavLink } from 'react-router-dom';
 import { Home, BarChart2, MessageCircle, Settings } from 'lucide-react';
+import type { ComponentType } from 'react';
+import type { LucideProps } from 'lucide-react';
 
-const NAV = [
+interface NavItem {
+  to: string;
+  icon: ComponentType<LucideProps>;
+  label: string;
+  end?: boolean;
+}
+
+const NAV: NavItem[] = [
   { to: '/', icon: Home, label: 'ホーム', end: true },
   { to: '/history', icon: BarChart2, label: '記録' },
   { to: '/chat', icon: MessageCircle, label: 'チャット' },
   { to: '/settings', icon: Settings, label: '設定' },
-] as const;
+];
 
 export function BottomNav() {
   return (
@@ -16,7 +25,7 @@ export function BottomNav() {
           <NavLink
             key={to}
             to={to}
-            end={'end' in { end } ? end : undefined}
+            end={end}
             className={({ isActive }) =>
               [
                 'flex-1 flex flex-col items-center justify-center gap-0.5 py-2 transition-colors',
