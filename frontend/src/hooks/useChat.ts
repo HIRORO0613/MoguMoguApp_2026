@@ -36,8 +36,8 @@ export function useChat() {
           reply = await generateMoguResponse(apiKey, historyRef.current, text);
           historyRef.current = [
             ...historyRef.current,
-            { role: 'user'  as const, parts: [{ text }] },
-            { role: 'model' as const, parts: [{ text: reply }] },
+            { role: 'user'  as const, parts: [{ text }]        as [{ text: string }] },
+            { role: 'model' as const, parts: [{ text: reply }] as [{ text: string }] },
           ].slice(-20); // 直近10往復を保持
         } else {
           reply =
